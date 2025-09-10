@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Sandbox v1.5.3 - Main Menu</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000000;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #mainMenu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 60px;
+        }
+
+        #menuCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .menu-title {
+            font-size: 5rem;
+            margin-bottom: 3rem;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .alpha-badge {
+            position: fixed;
+            bottom: 700px;
+            right: 630px;
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #4A90E2;
+            text-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
+            transform: rotate(360deg);
+            z-index: 1001;
+            animation: popInOut 2s ease-in-out infinite;
+        }
+
+        @keyframes popInOut {
+            0% {
+                transform: rotate(360deg) scale(1);
+            }
+
+            50% {
+                transform: rotate(360deg) scale(1.2);
+            }
+
+            100% {
+                transform: rotate(360deg) scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .menu-title {
+                font-size: 3rem;
+                margin-bottom: 2rem;
+            }
+        }
+
+        .physics-text {
+            color: #4A90E2;
+            text-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
+        }
+
+        .sandbox-text {
+            color: #FFD700;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+        }
+
+        .version-number {
+            font-size: 1.4rem;
+            color: #888;
+            margin-bottom: 4rem;
+            font-weight: bold;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            margin-bottom: 5rem;
+            align-items: center;
+        }
+
+        .start-btn {
+            padding: 15px 40px;
+            font-size: 1.4rem;
+            background: linear-gradient(45deg, #4A90E2, #4A90E2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            min-width: 250px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .start-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .whats-new-btn {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            padding: 10px 25px;
+            font-size: 1rem;
+            background: #4A90E2;
+            color: rgb(255, 255, 255);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .whats-new-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .footer-info {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            color: #666;
+            font-size: 0.9rem;
+            text-align: right;
+            line-height: 1.6;
+        }
+
+        .discord-link {
+            display: inline-block;
+            margin-top: 8px;
+            color: #617bd7;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .discord-link:hover {
+            color: #5b6eae;
+            text-shadow: 0 0 8px #7289da;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mainMenu">
+        <canvas id="menuCanvas"></canvas>
+        <h1 class="menu-title">
+            <span class="physics-text">PHYSICS</span><br>
+            <span class="sandbox-text">SANDBOX</span>
+            <span class="alpha-badge">ALPHA!</span>
+        </h1>
+        <div class="version-number">Version 1.5.7</div>
+        <div class="menu-buttons">
+            <button class="start-btn" onclick="startGame()">START SIMULATION</button>
+        </div>
+
+        <button class="whats-new-btn" onclick="openWhatsNew()">What's New?</button>
+
+        <div class="footer-info">
+            Copyright 2025 Physics Sandbox. All rights reserved.<br>
+            Built with HTML5 Canvas and JavaScript<br>
+            <a href="https://discord.gg/CrR5wX2ZEG" target="_blank" class="discord-link">Join our Discord Community!</a>
+        </div>
+    </div>
+
+    <script>
+        // Canvas and animation code
+        const menuCanvas = document.getElementById('menuCanvas');
+        const menuCtx = menuCanvas.getContext('2d');
+
+        // Set canvas sizes
+        function resizeCanvas() {
+            menuCanvas.width = window.innerWidth;
+            menuCanvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+
+        // Enhanced element properties
+        const elements = {
+            water: { color: '#4A90E2', density: 1, flammable: false, liquid: true, temp: 20 },
+            fire: { color: '#FF4500', density: 0, flammable: false, liquid: false, temp: 800 },
+            ice: { color: '#87CEEB', density: 2, flammable: false, liquid: false, temp: -10 },
+            soil: { color: '#8B4513', density: 2, flammable: false, liquid: false, temp: 20 },
+            glass: { color: '#ADD8E6', density: 2.5, flammable: false, liquid: false, temp: 20 },
+            algae: { color: '#228B22', density: 0.9, flammable: true, liquid: false, temp: 20 },
+            lava: { color: '#FF4500', density: 2.8, flammable: false, liquid: true, temp: 1200 },
+            dirt: { color: '#654321', density: 7.5, flammable: false, liquid: false, temp: 20 }
+        };
+
+        // Menu animation classes
+        let volcano = null;
+        let clouds = [];
+        let raindrops = [];
+        let flowers = [];
+        let dirtParticles = [];
+        let trees = [];
+
+        // Pixelated Tree class with swaying leaves
+        class PixelTree {
+            constructor(x, y) {
+                this.baseX = x;
+                this.baseY = y;
+                this.trunkHeight = 120 + Math.random() * 25;
+                this.trunkWidth = 20 + Math.random() * 4;
+                this.age = 0;
+                this.swayOffset = Math.random() * Math.PI * 2;
+                this.swaySpeed = 0.05 + Math.random() * 0.02;
+                this.swayAmount = 1 + Math.random() * 1.5;
+
+                // Generate trunk pixels
+                this.trunkPixels = [];
+                for (let y = 0; y < this.trunkHeight; y += 3) {
+                    for (let x = 0; x < this.trunkWidth; x += 3) {
+                        if (Math.random() > 0) {
+                            this.trunkPixels.push({
+                                x: x - this.trunkWidth / 2,
+                                y: -y,
+                                size: 3
+                            });
+                        }
+                    }
+                }
+
+                // Generate leaf clusters
+                this.leafPixels = [];
+                const leafClusters = 16 + Math.floor(Math.random() * 7);
+                const crownWidth = 45 + Math.random() * 15;
+                const crownHeight = 65 + Math.random() * 10;
+
+                for (let cluster = 0; cluster < leafClusters; cluster++) {
+                    const clusterX = (Math.random() - 0.5) * crownWidth;
+                    const clusterY = -this.trunkHeight - (Math.random() * crownHeight);
+                    const clusterRadius = 17 + Math.random() * 6;
+
+                    for (let i = -clusterRadius; i <= clusterRadius; i += 2) {
+                        for (let j = -clusterRadius; j <= clusterRadius; j += 2) {
+                            const distance = Math.sqrt(i * i + j * j);
+                            if (distance <= clusterRadius && Math.random() > 0.2) {
+                                this.leafPixels.push({
+                                    x: clusterX + i,
+                                    y: clusterY + j,
+                                    size: 4 + Math.random() * 2,
+                                    originalX: clusterX + i,
+                                    originalY: clusterY + j,
+                                    swayMultiplier: 1 + Math.random() * 0.4
+                                });
+                            }
+                        }
+                    }
+                }
+
+                const leafColors = ['#228B22', '#32CD32', '#90EE90', '#006400', '#4A7C59'];
+                this.leafColor = leafColors[Math.floor(Math.random() * leafColors.length)];
+            }
+
+            update() {
+                this.age++;
+                this.swayOffset += this.swaySpeed;
+
+                const swayAmount = Math.sin(this.swayOffset) * this.swayAmount;
+
+                for (const leaf of this.leafPixels) {
+                    const heightFactor = Math.abs(leaf.originalY) / this.trunkHeight;
+                    leaf.x = leaf.originalX + (swayAmount * leaf.swayMultiplier * heightFactor);
+                }
+            }
+
+            draw() {
+                const trunkSway = Math.sin(this.swayOffset) * 0.3;
+
+                menuCtx.fillStyle = '#8B4513';
+                for (const pixel of this.trunkPixels) {
+                    const heightFactor = Math.abs(pixel.y) / this.trunkHeight;
+                    const pixelSway = trunkSway * heightFactor;
+
+                    menuCtx.fillRect(
+                        Math.floor(this.baseX + pixel.x + pixelSway),
+                        Math.floor(this.baseY + pixel.y),
+                        pixel.size,
+                        pixel.size
+                    );
+                }
+
+                menuCtx.fillStyle = this.leafColor;
+                for (const pixel of this.leafPixels) {
+                    menuCtx.fillRect(
+                        Math.floor(this.baseX + pixel.x),
+                        Math.floor(this.baseY + pixel.y),
+                        pixel.size,
+                        pixel.size
+                    );
+                }
+            }
+        }
+
+        // Pixelated Cloud class
+        class PixelCloud {
+            constructor() {
+                this.x = Math.random() * (menuCanvas.width + 200) - 100;
+                this.y = Math.random() * 100 + 20;
+                this.speed = 0.3 + Math.random() * 0.5;
+                this.age = 0;
+                this.opacity = 0.85 + Math.random() * 0.25;
+
+                this.pixels = [];
+
+                const blobCount = 2 + Math.floor(Math.random() * 5);
+                const spreadX = 20 + Math.random() * 40;
+                const spreadY = 10 + Math.random() * 20;
+
+                for (let b = 0; b < blobCount; b++) {
+                    const cx = Math.floor((Math.random() - 0.5) * spreadX);
+                    const cy = Math.floor((Math.random() - 0.5) * spreadY);
+                    const rx = 6 + Math.floor(Math.random() * 10);
+                    const ry = 4 + Math.floor(Math.random() * 7);
+
+                    for (let i = -rx; i <= rx; i++) {
+                        for (let j = -ry; j <= ry; j++) {
+                            if ((i * i) / (rx * rx) + (j * j) / (ry * ry) <= 1) {
+                                if (Math.random() > 0.25) {
+                                    this.pixels.push({
+                                        x: cx + i * 4,
+                                        y: cy + j * 4,
+                                        size: 7 + Math.floor(Math.random() * 3)
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            update() {
+                this.age++;
+                this.x += this.speed;
+
+                if (this.x > menuCanvas.width + 120) {
+                    this.x = -120;
+                    this.y = Math.random() * 100 + 20;
+                }
+            }
+
+            draw() {
+                menuCtx.globalAlpha = this.opacity;
+                menuCtx.fillStyle = "#D3D3D3";
+
+                for (const p of this.pixels) {
+                    menuCtx.fillRect(
+                        Math.floor(this.x + p.x),
+                        Math.floor(this.y + p.y),
+                        p.size,
+                        p.size
+                    );
+                }
+
+                menuCtx.globalAlpha = 1;
+            }
+        }
+
+        // Pixelated raindrop class
+        class PixelRain {
+            constructor() {
+                this.x = Math.random() * menuCanvas.width;
+                this.y = -20;
+                this.vx = 0;
+                this.vy = 2 + Math.random() * 3;
+                this.life = 0 + Math.random() * 200;
+                this.maxLife = this.life;
+                this.size = 2 + Math.random() * 2;
+            }
+
+            update() {
+                this.vy += 0.05;
+                if (this.vy > 6) this.vy = 6;
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+
+                if (this.y > menuCanvas.height - 0 || this.life <= 0) {
+                    this.x = Math.random() * menuCanvas.width;
+                    this.y = -20;
+                    this.vy = 10 + Math.random() * 3;
+                    this.life = 800 + Math.random() * 200;
+                    this.maxLife = this.life;
+                }
+            }
+
+            draw() {
+                const alpha = Math.min(this.life / this.maxLife, 1);
+                menuCtx.globalAlpha = alpha;
+                menuCtx.fillStyle = elements.water.color;
+                menuCtx.fillRect(
+                    Math.floor(this.x),
+                    Math.floor(this.y),
+                    this.size,
+                    this.size * 2
+                );
+                menuCtx.globalAlpha = 1;
+            }
+        }
+
+        // Pixelated flower class
+        class PixelFlower {
+            constructor(x, y) {
+                this.baseX = x;
+                this.baseY = y;
+                this.stemHeight = 15 + Math.random() * 20;
+                this.bloomSize = 6 + Math.random() * 4;
+                this.growthProgress = 0;
+                this.maxGrowth = 1;
+                this.growthSpeed = 0.01 + Math.random() * 0.02;
+                this.swayOffset = Math.random() * Math.PI * 2;
+                this.swaySpeed = 0.02 + Math.random() * 0.02;
+                this.age = 0;
+
+                const colors = [
+                    '#FF69B4', '#FF1493', '#FF6347', '#FFA500',
+                    '#FFD700', '#ADFF2F', '#00FF7F', '#00CED1',
+                    '#4169E1', '#8A2BE2'
+                ];
+                this.petalColor = colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                this.age++;
+                this.swayOffset += this.swaySpeed;
+
+                if (this.growthProgress < this.maxGrowth) {
+                    this.growthProgress += this.growthSpeed;
+                }
+            }
+
+            draw() {
+                const sway = Math.sin(this.swayOffset) * 2;
+                const growth = Math.min(this.growthProgress, 1);
+
+                const stemPixels = Math.floor(this.stemHeight * growth / 4);
+                menuCtx.fillStyle = elements.algae.color;
+
+                for (let i = 0; i < stemPixels; i++) {
+                    menuCtx.fillRect(
+                        Math.floor(this.baseX + sway * (i / stemPixels)),
+                        Math.floor(this.baseY - i * 4),
+                        3,
+                        4
+                    );
+                }
+
+                if (growth > 0.6) {
+                    const flowerX = this.baseX + sway;
+                    const flowerY = this.baseY - this.stemHeight * growth;
+                    const bloomScale = (growth - 0.6) / 0.4;
+
+                    menuCtx.fillStyle = this.petalColor;
+                    const bloomPixels = Math.floor(this.bloomSize * bloomScale);
+
+                    for (let i = -bloomPixels; i <= bloomPixels; i += 3) {
+                        menuCtx.fillRect(flowerX + i, flowerY, 3, 3); // horizontal
+                        menuCtx.fillRect(flowerX, flowerY + i, 3, 3); // vertical
+                    }
+
+                    // Flower center
+                    menuCtx.fillStyle = '#FFD700';
+                    menuCtx.fillRect(flowerX, flowerY, 3, 3);
+                }
+            }
+        }
+
+        // Dirt particle class
+        class DirtPixel {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = 12 + Math.random() * 2;
+                this.color = elements.dirt.color;
+                this.settled = true;
+            }
+
+            draw() {
+                menuCtx.fillStyle = this.color;
+                menuCtx.fillRect(this.x, this.y, this.size, this.size);
+            }
+        }
+
+        class Volcano {
+            constructor() {
+                this.x = menuCanvas.width * 0.85;
+                this.y = menuCanvas.height - 0.95;
+                this.width = 800;
+                this.height = 480;
+                this.craterWidth = 120;
+                this.craterDepth = 20;
+
+                this.rockParticles = [];
+                this.lavaParticles = [];
+                this.lavaSpoutTimer = 0;
+                this.nextEruption = Math.random() * 20 + 60;
+
+                this.generateVolcanoStructure();
+            }
+
+            generateVolcanoStructure() {
+                const baseY = this.y;
+                const peakX = this.x;
+
+                for (let layer = 0; layer < this.height; layer += 2) {
+                    const layerY = baseY - layer;
+                    const layerWidth = this.width * (1 - layer / this.height * 0.6);
+                    const particlesInLayer = Math.floor(layerWidth / 6);
+
+                    for (let i = 0; i < particlesInLayer; i++) {
+                        const offsetX = (i - particlesInLayer / 2) * 6 + (Math.random() - 0.5) * 12;
+
+                        this.rockParticles.push({
+                            x: peakX + offsetX,
+                            y: layerY + (Math.random() - 0.5) * 8,
+                            size: 9 + Math.random() * 4,
+                            permanent: true
+                        });
+                    }
+                }
+
+                const craterY = baseY - this.height;
+                const rimPoints = 32;
+                for (let i = 0; i < rimPoints; i++) {
+                    const angle = (i / rimPoints) * Math.PI;
+                    const rimRadius = this.craterWidth / 2 + (Math.random() - 0.5) * 20;
+                    const rimX = peakX + Math.cos(angle) * rimRadius;
+                    const rimY = craterY + Math.sin(angle) * 15 + (Math.random() - 0.5) * 8;
+
+                    this.rockParticles.push({
+                        x: rimX,
+                        y: rimY,
+                        size: 6 + Math.random() * 5,
+                        permanent: true
+                    });
+                }
+            }
+
+            update() {
+                this.lavaSpoutTimer++;
+
+                if (this.lavaSpoutTimer % 4 === 0) {
+                    const craterY = this.y - this.height;
+                    const spoutX = this.x + (Math.random() - 0.5) * this.craterWidth * 0.8;
+
+                    this.lavaParticles.push({
+                        x: spoutX,
+                        y: craterY,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: Math.random() * 2 + 1,
+                        life: 800 + Math.random() * 400,
+                        maxLife: 800 + Math.random() * 400,
+                        size: 6 + Math.random() * 5,
+                        temperature: 1.0 + Math.random() * 0.5
+                    });
+                }
+
+                if (this.lavaSpoutTimer > this.nextEruption) {
+                    this.erupt();
+                    this.nextEruption = this.lavaSpoutTimer + Math.random() * 10 + 200;
+                }
+
+                // Update lava particles
+                for (let i = this.lavaParticles.length - 1; i >= 0; i--) {
+                    const particle = this.lavaParticles[i];
+
+                    particle.vy += 0.12;
+                    particle.vx *= 0.98;
+                    if (particle.vy > 6) particle.vy = 6;
+
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.life--;
+                    particle.temperature *= 0.998;
+
+                    if (particle.life <= 0 || particle.y > menuCanvas.height + 50) {
+                        this.lavaParticles.splice(i, 1);
+                    }
+                }
+            }
+
+            erupt() {
+                const craterY = this.y - this.height;
+                const eruptionForce = 15 + Math.random() * 15;
+                const particleCount = 20 + Math.random() * 25;
+
+                for (let i = 0; i < particleCount; i++) {
+                    const angle = Math.PI * 1.5 + (Math.random() - 0.5) * Math.PI * 0.3;
+                    const force = eruptionForce * (0.5 + Math.random() * 0.5);
+
+                    this.lavaParticles.push({
+                        x: this.x + (Math.random() - 0.5) * this.craterWidth * 0.5,
+                        y: craterY,
+                        vx: Math.cos(angle) * force * 0.2,
+                        vy: Math.sin(angle) * force * 0.8,
+                        life: 1000 + Math.random() * 500,
+                        maxLife: 1000 + Math.random() * 500,
+                        size: 8 + Math.random() * 6,
+                        temperature: 2.0 + Math.random() * 0.5
+                    });
+                }
+            }
+
+            draw() {
+                // Draw volcano structure
+                for (const particle of this.rockParticles) {
+                    menuCtx.globalAlpha = 2;
+                    menuCtx.fillStyle = '#666';
+                    menuCtx.fillRect(
+                        Math.floor(particle.x - particle.size / 2),
+                        Math.floor(particle.y - particle.size / 2),
+                        particle.size,
+                        particle.size
+                    );
+                }
+
+                // Draw lava particles
+                for (const particle of this.lavaParticles) {
+                    const alpha = particle.life / particle.maxLife;
+                    const temp = particle.temperature;
+
+                    if (temp > 1.5) {
+                        menuCtx.fillStyle = '#FF4500';
+                    } else if (temp > 1.0) {
+                        menuCtx.fillStyle = '#FF6B35';
+                    } else if (temp > 0.5) {
+                        menuCtx.fillStyle = '#FF8C42';
+                    } else {
+                        menuCtx.fillStyle = '#8B4513';
+                    }
+
+                    if (temp > 1.2) {
+                        menuCtx.shadowColor = menuCtx.fillStyle;
+                        menuCtx.shadowBlur = 8;
+                    }
+
+                    menuCtx.globalAlpha = alpha * 0.9;
+                    menuCtx.fillRect(
+                        Math.floor(particle.x - particle.size / 2),
+                        Math.floor(particle.y - particle.size / 2),
+                        particle.size,
+                        particle.size
+                    );
+
+                    menuCtx.shadowBlur = 0;
+                }
+
+                menuCtx.globalAlpha = 1;
+            }
+        }
+
+        // Initialize all elements
+        function initializeScene() {
+            // Create volcano
+            volcano = new Volcano();
+
+            // Create pixelated clouds
+            for (let i = 0; i < 4; i++) {
+                clouds.push(new PixelCloud());
+            }
+
+            // Create rain particles
+            for (let i = 0; i < 70; i++) {
+                raindrops.push(new PixelRain());
+            }
+
+            // Create dirt ground
+            const groundHeight = 40;
+            for (let x = 0; x < menuCanvas.width; x += 4) {
+                for (let y = 0; y < groundHeight; y += 4) {
+                    if (Math.random() > 0.4) {
+                        dirtParticles.push(new DirtPixel(x, menuCanvas.height - groundHeight + y));
+                    }
+                }
+            }
+
+            // Create trees on the dirt
+            const treeCount = 5 + Math.floor(Math.random() * 1);
+            const treeSpacing = menuCanvas.width / (treeCount + 2);
+
+            for (let i = 0; i < treeCount; i++) {
+                const baseX = treeSpacing * (i + 1) + (Math.random() - 0.5) * treeSpacing * 0.4;
+                const baseY = menuCanvas.height - 25 - Math.random() * 10;
+
+                // Skip if too close to volcano
+                if (Math.abs(baseX - volcano.x) > 150) {
+                    trees.push(new PixelTree(baseX, baseY));
+                }
+            }
+
+            // Create flowers on the dirt (between trees)
+            for (let i = 0; i < 55; i++) {
+                const x = Math.random() * (menuCanvas.width - 100) + 50;
+                const y = menuCanvas.height - 20 - Math.random() * 15;
+
+                // Check if not too close to any tree
+                let tooCloseToTree = false;
+                for (const tree of trees) {
+                    if (Math.abs(x - tree.baseX) < 30) {
+                        tooCloseToTree = true;
+                        break;
+                    }
+                }
+
+                if (!tooCloseToTree) {
+                    flowers.push(new PixelFlower(x, y));
+                }
+            }
+        }
+
+        function animateMenu() {
+            menuCtx.clearRect(0, 0, menuCanvas.width, menuCanvas.height);
+
+            // Draw clouds (behind everything)
+            clouds.forEach(cloud => {
+                cloud.update();
+                cloud.draw();
+            });
+
+            // Draw rain
+            raindrops.forEach(drop => {
+                drop.update();
+                drop.draw();
+            });
+
+            // Draw volcano
+            volcano.update();
+            volcano.draw();
+
+            // Draw dirt ground
+            dirtParticles.forEach(particle => {
+                particle.draw();
+            });
+
+            // Draw trees (before flowers so flowers appear in front)
+            trees.forEach(tree => {
+                tree.update();
+                tree.draw();
+            });
+
+            // Draw flowers
+            flowers.forEach(flower => {
+                flower.update();
+                flower.draw();
+            });
+
+            requestAnimationFrame(animateMenu);
+        }
+
+        // Initialize scene
+        initializeScene();
+        animateMenu();
+
+        // UI Functions
+        function startGame() {
+            // Redirect to the actual game file
+            window.location.href = 'main.html';
+        }
+
+        function openWhatsNew() {
+            const path = 'infographic.html';
+            window.open(path, '_blank');
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+
+            // Reinitialize scene with new dimensions
+            raindrops = [];
+            flowers = [];
+            dirtParticles = [];
+            trees = [];
+            volcano = null;
+            initializeScene();
+        });
+
+    </script>
+</body>
+
+</html>

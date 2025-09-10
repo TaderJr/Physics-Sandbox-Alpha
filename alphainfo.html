@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Sandbox Alpha Site</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            padding: 2rem 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #b0b0b0;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 2rem;
+        }
+
+        .alpha-badge {
+            display: inline-block;
+            background: #333;
+            border: 1px solid #666;
+            color: #e0e0e0;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2rem;
+        }
+
+        .whats-new-btn {
+            background: #2a2a2a;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .whats-new-btn:hover {
+            background: #333;
+            border-color: #555;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #000000;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow: hidden;
+            border: 1px solid #333;
+            animation: modalSlideIn 0.4s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            background: #000000;
+            border-bottom: 1px solid #333;
+            padding: 20px;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .modal-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .infographic-content {
+            padding: 30px;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+
+        .section {
+            margin: 20px 0;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .section-subtitle {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #ddd;
+            margin: 25px 0 15px 0;
+        }
+
+        .version-info {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .patch-note {
+            margin: 15px 0;
+            padding: 12px;
+            background: #1a1a1a;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+        }
+
+        .info-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .feature-list li {
+            margin: 10px 0;
+            padding: 8px 15px;
+            background: #1a1a1a;
+            border-left: 4px solid #4A90E2;
+            border-radius: 4px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .feature-item:nth-child(1) {
+            border-left-color: #ff6b6b;
+            animation-delay: 0.1s;
+        }
+
+        .feature-item:nth-child(2) {
+            border-left-color: #4ecdc4;
+            animation-delay: 0.2s;
+        }
+
+        .feature-item:nth-child(3) {
+            border-left-color: #45b7d1;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-item:hover {
+            transform: translateX(10px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            margin-right: 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .feature-item:nth-child(1) .feature-icon {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+        }
+
+        .feature-item:nth-child(2) .feature-icon {
+            background: linear-gradient(45deg, #4ecdc4, #6dd5ed);
+        }
+
+        .feature-item:nth-child(3) .feature-icon {
+            background: linear-gradient(45deg, #45b7d1, #6dd5ed);
+        }
+
+        .feature-text h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: #f0f0f0;
+        }
+
+        .feature-text p {
+            color: #b0b0b0;
+            line-height: 1.5;
+        }
+
+        .hero-section {
+            text-align: center;
+            padding: 4rem 0;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            gap: 20px;
+        }
+
+        .left-nav {
+            flex-shrink: 0;
+        }
+
+        .right-nav {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .coming-soon-tab {
+            background: #000000;
+            border: 1px solid #333;
+            color: #666;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: not-allowed;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            color: #c0c0c0;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+            line-height: 1.6;
+        }
+
+        .particles {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="alpha-badge">Alpha Version</div>
+            <h1 class="logo">Physics Sandbox</h1>
+            <p class="subtitle">Alpha Site</p>
+        </header>
+
+        <section class="hero-section">
+            <div class="nav-container">
+                <div class="left-nav">
+                    <button class="whats-new-btn" onclick="openModal()">
+                        What's New?
+                    </button>
+                </div>
+
+                <div class="right-nav">
+                    <div class="coming-soon-tab">Features</div>
+                    <div class="coming-soon-tab">Documentation</div>
+                    <div class="coming-soon-tab">Gallery</div>
+                    <div class="coming-soon-tab">Community</div>
+                    <div class="coming-soon-tab">Download</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal -->
+    <div id="whatsNewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>What's New</h2>
+                <p>Latest Alpha Updates</p>
+            </div>
+            <div class="infographic-content">
+                <div class="section">
+                    <h2 class="section-title">Version 1.5.0 - Latest Release</h2>
+                    <div class="version-info">
+                        <p><strong>Release Date:</strong> 2025<br>
+                            <strong>Focus:</strong> New Elements & Enhanced Physics
+                        </p>
+                    </div>
+
+                    <div class="patch-note">
+                        <h4>Main Menu Effects</h4>
+                        <ul class="feature-list">
+                            <li>Enhanced user interface with volcanic-themed visual effects</li>
+                            <li>Dynamic animations and immersive interactions</li>
+                            <li>Spaced out main menu with reduced neon effects</li>
+                            <li>Better visual hierarchy and spacing</li>
+                        </ul>
+                    </div>
+
+                    <div class="patch-note">
+                        <h4>Volcano Effects</h4>
+                        <ul class="feature-list">
+                            <li><strong>Volcano Core:</strong> Generates lava particles over time</li>
+                            <li>Realistic volcanic simulations with particle systems</li>
+                            <li>Heat dynamics and lava flow mechanics</li>
+                            <li>Advanced physics principles demonstrated</li>
+                        </ul>
+                    </div>
+
+                    <div class="patch-note">
+                        <h4>Centered Drawing Elements</h4>
+                        <ul class="feature-list">
+                            <li>Improved precision and usability with perfectly centered drawing tools</li>
+                            <li>Enhanced accuracy for element placement</li>
+                            <li>Better control over physics experiments</li>
+                            <li>Optimized user interface alignment</li>
+                        </ul>
+                    </div>
+
+                    <div class="patch-note">
+                        <h4>Added Alpha Site</h4>
+                        <ul class="feature-list">
+                            <li>Brand new alpha testing platform</li>
+                            <li>Early access to cutting-edge features</li>
+                            <li>Help shape the future of physics simulation</li>
+                            <li>"What's New?" button integration</li>
+                            <li>Resizable controls panel with drag handle</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3 class="section-subtitle">Technical Achievements</h3>
+                        <ul class="feature-list">
+                            <li><strong>27 Unique Elements:</strong> Complete collection including specialized compounds
+                            </li>
+                            <li><strong>Advanced Physics Engine:</strong> Real-time cellular automata</li>
+                            <li><strong>Temperature Simulation:</strong> Full thermal dynamics</li>
+                            <li><strong>Gravitational Physics:</strong> Black hole mechanics</li>
+                            <li><strong>Cross-Platform:</strong> Desktop, mobile, and tablet support</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('whatsNewModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('whatsNewModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function (event) {
+            const modal = document.getElementById('whatsNewModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+
+</html>

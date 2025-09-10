@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Sandbox v2.0</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000000;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            display: block;
+            cursor: crosshair;
+        }
+
+        /* Confirmation modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            margin: 20% auto;
+            padding: 30px;
+            border: 1px solid #444;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal h2 {
+            color: #FFD700;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .modal p {
+            color: #ccc;
+            margin-bottom: 30px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .modal-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s;
+            min-width: 100px;
+        }
+
+        .modal-btn-confirm {
+            background: #FF4444;
+            color: white;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #FF6666;
+            transform: translateY(-2px);
+        }
+
+        .modal-btn-cancel {
+            background: #666;
+            color: white;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #888;
+            transform: translateY(-2px);
+        }
+
+        /* Left sidebar controls */
+        #leftSidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 300px;
+            background: linear-gradient(to right, rgba(20, 20, 20, 0.95), rgba(20, 20, 20, 0.8));
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            transform: translateX(0);
+            z-index: 100;
+        }
+
+        #leftSidebar.closed {
+            transform: translateX(-100%);
+        }
+
+        .menu-toggle {
+            position: fixed;
+            left: 310px;
+            top: 10px;
+            background: rgba(74, 144, 226, 0.9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 50px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 101;
+            display: block;
+            transition: left 0.3s ease;
+        }
+
+        .menu-toggle.closed {
+            left: 10px;
+        }
+
+        .controls-section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: #4A90E2;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.3);
+            padding-bottom: 5px;
+        }
+
+        /* Category dropdown styles */
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(74, 144, 226, 0.2);
+            border: 1px solid rgba(74, 144, 226, 0.4);
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .category-header:hover {
+            background: rgba(74, 144, 226, 0.3);
+        }
+
+        .category-arrow {
+            transition: transform 0.3s;
+        }
+
+        .category-arrow.expanded {
+            transform: rotate(180deg);
+        }
+
+        .category-content {
+            display: none;
+            margin-bottom: 10px;
+        }
+
+        .category-content.expanded {
+            display: block;
+        }
+
+        .elements-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .element-btn {
+            padding: 8px 6px;
+            border: 2px solid;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .element-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .element-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* Element colors */
+        .sand {
+            border-color: #FFD700;
+        }
+
+        .soil {
+            border-color: #8B4513;
+        }
+
+        .stone {
+            border-color: #666;
+        }
+
+        .metal {
+            border-color: #C0C0C0;
+        }
+
+        .tin {
+            border-color: #E6E6FA;
+        }
+
+        .glass {
+            border-color: #ADD8E6;
+        }
+
+        .uranium {
+            border-color: #00FF00;
+        }
+
+        .water {
+            border-color: #4A90E2;
+        }
+
+        .waterfountain {
+            border-color: #0042c5;
+        }
+
+        .oil {
+            border-color: #cfb480;
+        }
+
+        .acid {
+            border-color: #32CD32;
+        }
+
+        .liquidnitrogen {
+            border-color: #00FFFF;
+        }
+
+        .lava {
+            border-color: #FF4500;
+        }
+
+        .fire {
+            border-color: #FF4500;
+        }
+
+        .steam {
+            border-color: #E0E0E0;
+        }
+
+        .smoke {
+            border-color: #696969;
+        }
+
+        .hydrogen {
+            border-color: #FFB6C1;
+        }
+
+        .ice {
+            border-color: #87CEEB;
+        }
+
+        .explosive {
+            border-color: #FF0000;
+        }
+
+        .bomb {
+            border-color: #FF6600;
+        }
+
+        .gunpowder {
+            border-color: #555;
+        }
+
+        .seed {
+            border-color: #90EE90;
+        }
+
+        .wood {
+            border-color: #65320e;
+        }
+
+        .algae {
+            border-color: #228B22;
+        }
+
+        .flower {
+            border-color: #FF69B4;
+        }
+
+        .virus {
+            border-color: #00FF00;
+        }
+
+        .volcano {
+            border-color: #8B0000;
+        }
+
+        .blackhole {
+            border-color: #543572;
+            background: rgba(60, 1, 87, 0.8);
+            position: relative;
+            cursor: allowed;
+        }
+
+
+
+
+        .eraser {
+            border-color: #888;
+            background: rgba(136, 136, 136, 0.2);
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: white;
+            font-size: 12px;
+        }
+
+        .control-row label {
+            min-width: 50px;
+        }
+
+        .control-row input[type="range"] {
+            flex: 1;
+            margin: 0 10px;
+        }
+
+        .control-row span {
+            min-width: 30px;
+            text-align: right;
+        }
+
+        .control-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 11px;
+            transition: all 0.2s;
+            color: white;
+        }
+
+        .clear-btn {
+            background: #FF4444;
+        }
+
+        .menu-btn {
+            background: #4352c0;
+        }
+
+        .thermal-btn {
+            background: #4352c0;
+        }
+
+        .thermal-btn.active {
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .clear-btn:hover {
+            background: #FF6666;
+        }
+
+        .menu-btn:hover {
+            background: #6666FF;
+        }
+
+        .thermal-btn:hover {
+            background: #FFAA00;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">✕</button>
+
+    <div id="leftSidebar">
+        <div class="controls-section">
+            <div class="section-title">Elements</div>
+
+            <!-- Solids Category -->
+            <div class="category-header" onclick="toggleCategory('solids')">
+                <span>Solids</span>
+                <span class="category-arrow">▼</span>
+            </div>
+            <div class="category-content expanded" id="solids-content">
+                <div class="elements-grid">
+                    <button class="element-btn sand active" data-element="sand">Sand</button>
+                    <button class="element-btn soil" data-element="soil">Soil</button>
+                    <button class="element-btn stone" data-element="stone">Stone</button>
+                    <button class="element-btn metal" data-element="metal">Metal</button>
+                    <button class="element-btn tin" data-element="tin">Tin</button>
+                    <button class="element-btn glass" data-element="glass">Glass</button>
+                    <button class="element-btn uranium" data-element="uranium">Uranium</button>
+                </div>
+            </div>
+
+            <!-- Liquids Category -->
+            <div class="category-header" onclick="toggleCategory('liquids')">
+                <span>Liquids</span>
+                <span class="category-arrow">▼</span>
+            </div>
+            <div class="category-content" id="liquids-content">
+                <div class="elements-grid">
+                    <button class="element-btn water" data-element="water">Water</button>
+                    <button class="element-btn oil" data-element="oil">Oil</button>
+                    <button class="element-btn acid" data-element="acid">Acid</button>
+                    <button class="element-btn liquidnitrogen" data-element="liquidnitrogen">Liquid N2</button>
+                    <button class="element-btn lava" data-element="lava">Lava</button>
+                </div>
+            </div>
+
+            <!-- Gases Category -->
+            <div class="category-header" onclick="toggleCategory('gases')">
+                <span>Gases</span>
+                <span class="category-arrow">▼</span>
+            </div>
+            <div class="category-content" id="gases-content">
+                <div class="elements-grid">
+                    <button class="element-btn fire" data-element="fire">Fire</button>
+                    <button class="element-btn steam" data-element="steam">Steam</button>
+                    <button class="element-btn smoke" data-element="smoke">Smoke</button>
+                    <button class="element-btn hydrogen" data-element="hydrogen">Hydrogen</button>
+                </div>
+            </div>
+
+            <!-- Ice Category -->
+            <div class="category-header" onclick="toggleCategory('ice')">
+                <span>Ice</span>
+                <span class="category-arrow">▼</span>
+            </div>
+            <div class="category-content" id="ice-content">
+                <div class="elements-grid">
+                    <button class="element-btn ice" data-element="ice">Ice</button>
+                </div>
+            </div>
+
+            <!-- Explosives Category -->
+            <div class="category-header" onclick="toggleCategory('explosives')">
+                <span>Explosives</span>
+                <span class="category-arrow">▼</span>
+            </div>
+            <div class="category-content" id="explosives-content">
+                <div class="elements-grid">
+                    <button class="element-btn explosive" data-element="explosive">TNT</button>
+                    <button class="element-btn bomb" data-element="bomb">Bomb</button>
+                    <button class="element-btn gunpowder" data-element="gunpowder">Gunpowder</button>
+                </div>
+            </div>
+
+            <!-- Life Category -->
+            <div class="category-header" onclick="toggleCategory('life')">
+                <span>Life</span>
+                <span class="category-arrow">▼</span>
+            </div>
+            <div class="category-content" id="life-content">
+                <div class="elements-grid">
+                    <button class="element-btn seed" data-element="seed">Seed</button>
+                    <button class="element-btn wood" data-element="wood">Wood</button>
+                    <button class="element-btn algae" data-element="algae">Algae</button>
+                    <button class="element-btn flower" data-element="flower">Flower</button>
+                    <button class="element-btn virus" data-element="virus">Virus</button>
+                </div>
+            </div>
+
+            <!-- Special Category -->
+            <div class="category-header" onclick="toggleCategory('special')">
+                <span>Special</span>
+                <span class="category-arrow">▼</span>
+            </div>
+            <div class="category-content" id="special-content">
+                <div class="elements-grid">
+                    <button class="element-btn volcano" data-element="volcano">Volcano</button>
+                    <button class="element-btn waterfountain" data-element="waterfountain">Water Fountain</button>
+                    <button class="element-btn blackhole " data-element="blackhole">Black Hole</button>
+                    <button class="element-btn eraser" data-element="eraser">Eraser</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <div class="section-title">Controls</div>
+
+            <div class="control-row">
+                <label>Brush:</label>
+                <input type="range" id="brushSize" min="1" max="20" value="5">
+                <span id="brushValue">5</span>
+            </div>
+
+            <div class="control-row">
+                <label>Speed:</label>
+                <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1">
+                <span id="speedValue">1.0x</span>
+            </div>
+
+            <div class="control-row">
+                <label>Grid:</label>
+                <input type="range" id="gridSizeSlider" min="1" max="6" value="3">
+                <span id="gridValue">3px</span>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <div class="section-title">Actions</div>
+            <div class="control-buttons">
+                <button class="control-btn thermal-btn" id="thermalBtn" onclick="toggleThermal()">Thermal
+                    Vision</button>
+                <button class="control-btn clear-btn" onclick="showClearConfirmation()">Clear Canvas</button>
+                <button class="control-btn menu-btn" onclick="goToMenu()">Main Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modals -->
+    <div id="clearModal" class="modal">
+        <div class="modal-content">
+            <h2>Clear Canvas</h2>
+            <p>Are you sure you want to clear the entire canvas? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-confirm" onclick="confirmClear()">Yes, Clear</button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeClearModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gridModal" class="modal">
+        <div class="modal-content">
+            <h2>Change Grid Size</h2>
+            <p>Changing the grid size will reset your entire simulation. Are you sure you want to continue?</p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-confirm" onclick="confirmGridChange()">Yes, Change Grid</button>
+                <button class="modal-btn modal-btn-cancel" onclick="cancelGridChange()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let gameStarted = true;
+        let thermalVision = false;
+        let sidebarOpen = true; // Start with sidebar open
+        let simulationSpeed = 1.0;
+        let pendingGridSize = null;
+
+        // Set canvas sizes
+        function resizeCanvases() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvases();
+
+        let GRID_SIZE = 3;
+        let cols = Math.floor(canvas.width / GRID_SIZE);
+        let rows = Math.floor(canvas.height / GRID_SIZE);
+
+        let grid = [];
+        let currentElement = 'sand';
+        let brushSize = 5;
+        let isDrawing = false;
+
+        // Enhanced element properties with new elements
+        const elements = {
+            sand: { color: '#FFD700', density: 3, flammable: false, liquid: false, temp: 20, meltPoint: 1700 },
+            water: { color: '#4A90E2', density: 1, flammable: false, liquid: true, temp: 20, freezePoint: 0, boilPoint: 100 },
+            stone: { color: '#666', density: 5, flammable: false, liquid: false, temp: 20, meltPoint: 1200 },
+            fire: { color: '#FF4500', density: 0, flammable: false, liquid: false, life: 60, temp: 800 },
+            ice: { color: '#87CEEB', density: 2, flammable: false, liquid: false, temp: -10, meltPoint: 0 },
+            acid: { color: '#32CD32', density: 1, flammable: false, liquid: true, temp: 20, ignitePoint: 140 },
+            oil: { color: '#cfb480', density: 0.8, flammable: true, liquid: true, temp: 20, ignitePoint: 250 },
+            explosive: { color: '#FF0000', density: 2, flammable: true, liquid: false, temp: 20, ignitePoint: 300 },
+            wood: { color: '#65320e', density: 1.5, flammable: true, liquid: false, temp: 20, ignitePoint: 300 },
+            metal: { color: '#C0C0C0', density: 8, flammable: false, liquid: false, temp: 20, meltPoint: 1500 },
+            tin: { color: '#E6E6FA', density: 7, flammable: false, liquid: false, temp: 20, meltPoint: 232 },
+            moltenTin: { color: '#D3D3D3', density: 6, flammable: false, liquid: true, temp: 300, coolsTo: 'tin' },
+            soil: { color: '#8B4513', density: 2, flammable: false, liquid: false, temp: 20, fertile: true },
+            seed: { color: '#90EE90', density: 1.2, flammable: false, liquid: false, temp: 20, growthStage: 0, needsWater: true },
+            sprout: { color: '#7CFC00', density: 1, flammable: true, liquid: false, temp: 20, ignitePoint: 250 },
+            plant: { color: '#228B22', density: 1, flammable: true, liquid: false, temp: 20, ignitePoint: 250 },
+            leaf: { color: '#32CD32', density: 0.5, flammable: true, liquid: false, temp: 20, ignitePoint: 200 },
+            glass: { color: '#ADD8E6', density: 2.5, flammable: false, liquid: false, temp: 20, meltPoint: 1600, transparent: true },
+            bomb: { color: '#FF6600', density: 3, flammable: false, liquid: false, temp: 20, explosive: true },
+            algae: { color: '#228B22', density: 0.9, flammable: true, liquid: false, temp: 20, ignitePoint: 200, spreadsInWater: true },
+            flower: { color: '#FF69B4', density: 0.3, flammable: true, liquid: false, temp: 20, ignitePoint: 180 },
+            steam: { color: '#E0E0E0', density: 0, flammable: false, liquid: false, temp: 110, life: 300, rises: true },
+            lava: { color: '#FF4500', density: 2.8, flammable: false, liquid: true, temp: 1200, coolsTo: 'stone' },
+            smoke: { color: '#696969', density: 0, flammable: false, liquid: false, temp: 200, life: 200, rises: true },
+            volcano: { color: '#8B0000', density: 10, flammable: false, liquid: false, temp: 1400, generator: true },
+            blackhole: { color: '#111111', density: 100, flammable: false, liquid: false, temp: -273, sucker: true },
+            liquidnitrogen: { color: '#00FFFF', density: 0.8, flammable: false, liquid: true, temp: -196, freezer: true },
+            virus: { color: '#00FF00', density: 0.1, flammable: false, liquid: false, temp: 37, infects: true, life: 500 },
+            gunpowder: { color: '#555555', density: 1.7, flammable: true, liquid: false, temp: 20, ignitePoint: 250, explosive: true },
+            hydrogen: { color: '#FFB6C1', density: 0.07, flammable: true, liquid: false, temp: 20, ignitePoint: 500, gas: true },
+            brittle: { color: '#B0E0E6', density: 1.5, flammable: false, liquid: false, temp: -50, breaks: true },
+            uranium: { color: '#00FF00', density: 19, flammable: false, liquid: false, temp: 20, unstable: true, flickerTime: 180 },
+            waterfountain: { color: '#87CEEB', density: 10, flammable: false, liquid: false, temp: 20, generator: true, waterGenerator: true },
+        };
+
+        // Game particle system
+        class Particle {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.vx = 0;
+                this.vy = 0;
+                this.life = elements[type].life || -1;
+                this.temp = elements[type].temp || 20;
+                this.updated = false;
+                this.growthTimer = 0;
+                this.growthStage = elements[type].growthStage || 0;
+                this.age = 0;
+                this.hasCollided = false;
+                this.height = 0;
+                this.lavaTimer = 0;
+                this.infected = false;
+                this.fallDistance = 0;
+                this.flickerTimer = elements[type].flickerTime || 0;
+                this.isFlickering = false;
+                this.waterAbsorbed = false;
+            }
+        }
+
+        function initGrid() {
+            grid = [];
+            for (let y = 0; y < rows; y++) {
+                grid[y] = [];
+                for (let x = 0; x < cols; x++) {
+                    grid[y][x] = null;
+                }
+            }
+        }
+
+        function getParticle(x, y) {
+            if (x < 0 || x >= cols || y < 0 || y >= rows) return undefined;
+            return grid[y] ? grid[y][x] : undefined;
+        }
+
+        function setParticle(x, y, particle) {
+            if (x < 0 || x >= cols || y < 0 || y >= rows) return;
+            if (!grid[y]) grid[y] = [];
+            grid[y][x] = particle;
+            if (particle) {
+                particle.x = x;
+                particle.y = y;
+            }
+        }
+
+        function isEmpty(x, y) {
+            return !getParticle(x, y);
+        }
+
+        function isLiquid(x, y) {
+            const particle = getParticle(x, y);
+            return particle && elements[particle.type].liquid;
+        }
+
+        function swapParticles(x1, y1, x2, y2) {
+            if (x1 < 0 || x1 >= cols || y1 < 0 || y1 >= rows ||
+                x2 < 0 || x2 >= cols || y2 < 0 || y2 >= rows) return;
+
+            if (!grid[y1]) grid[y1] = [];
+            if (!grid[y2]) grid[y2] = [];
+
+            const temp = grid[y1][x1];
+            grid[y1][x1] = grid[y2][x2];
+            grid[y2][x2] = temp;
+
+            if (grid[y1][x1]) {
+                grid[y1][x1].x = x1;
+                grid[y1][x1].y = y1;
+            }
+            if (grid[y2][x2]) {
+                grid[y2][x2].x = x2;
+                grid[y2][x2].y = y2;
+            }
+        }
+
+        function updateParticle(particle) {
+            if (particle.updated) return;
+            particle.updated = true;
+            particle.age++;
+
+            const x = particle.x;
+            const y = particle.y;
+            const type = particle.type;
+
+            // Universal cooling system
+            if (particle.temp > 20) {
+                particle.temp = Math.max(20, particle.temp - 0.3);
+            } else if (particle.temp < 20) {
+                particle.temp = Math.min(20, particle.temp + 0.15);
+            }
+
+            // Uranium behavior - flicker then explode
+            if (type === 'uranium') {
+                if (particle.flickerTimer > 0) {
+                    particle.flickerTimer--;
+                    particle.isFlickering = true;
+
+                    if (particle.flickerTimer <= 0) {
+                        // Nuclear explosion - bigger than regular explosions
+                        const radius = 22;
+                        for (let dx = -radius; dx <= radius; dx++) {
+                            for (let dy = -radius; dy <= radius; dy++) {
+                                const distance = Math.sqrt(dx * dx + dy * dy);
+                                if (distance <= radius) {
+                                    const nx = x + dx;
+                                    const ny = y + dy;
+                                    if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+                                        const intensity = 1 - (distance / radius);
+                                        if (Math.random() < 0.9 * intensity) {
+                                            const fireParticle = new Particle(nx, ny, 'fire');
+                                            fireParticle.temp = 1500;
+                                            fireParticle.life = 120 + Math.random() * 60;
+                                            setParticle(nx, ny, fireParticle);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // Seed water absorption
+            if (type === 'seed' && !particle.waterAbsorbed) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        const neighbor = getParticle(x + dx, y + dy);
+                        if (neighbor && neighbor.type === 'water') {
+                            setParticle(x + dx, y + dy, null); // Remove water
+                            particle.waterAbsorbed = true;
+                            particle.growthTimer += 25; // Boost growth
+                            break;
+                        }
+                    }
+                    if (particle.waterAbsorbed) break;
+                }
+            }
+
+            // Fixed tin melting - check temperature and nearby fire
+            if (type === 'tin' && (particle.temp > elements.tin.meltPoint || particle.temp > 200)) {
+                let shouldMelt = particle.temp > elements.tin.meltPoint;
+                // Also check for nearby fire
+                if (!shouldMelt) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        for (let dy = -1; dy <= 1; dy++) {
+                            const neighbor = getParticle(x + dx, y + dy);
+                            if (neighbor && (neighbor.type === 'fire' || neighbor.type === 'lava' || neighbor.temp > 400)) {
+                                particle.temp += 50;
+                                shouldMelt = true;
+                                break;
+                            }
+                        }
+                        if (shouldMelt) break;
+                    }
+                }
+                if (shouldMelt) {
+                    const molten = new Particle(x, y, 'moltenTin');
+                    molten.temp = 300;
+                    setParticle(x, y, molten);
+                    return;
+                }
+            }
+
+            // Molten tin cooling logic
+            if (type === 'moltenTin' && particle.temp <= elements.tin.meltPoint) {
+                const cooled = new Particle(x, y, 'tin');
+                cooled.temp = particle.temp; // Preserve the current temperature
+                setParticle(x, y, cooled);
+                return;
+            }
+
+            // Lava interactions
+            if (type === 'lava') {
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        const neighbor = getParticle(x + dx, y + dy);
+                        if (neighbor) {
+                            if (neighbor.type === 'liquidnitrogen') {
+                                setParticle(x, y, new Particle(x, y, 'stone'));
+                                return;
+                            }
+
+                            neighbor.temp += 100;
+                            if (elements[neighbor.type].flammable || ['wood', 'plant', 'leaf', 'sprout', 'flower', 'algae', 'oil', 'explosive', 'gunpowder', 'hydrogen'].includes(neighbor.type)) {
+                                if (Math.random() < 0.3) {
+                                    setParticle(x + dx, y + dy, new Particle(x + dx, y + dy, 'fire'));
+                                }
+                            }
+
+                            if (neighbor.type === 'water') {
+                                setParticle(x + dx, y + dy, new Particle(x + dx, y + dy, 'steam'));
+                            }
+
+                            if (neighbor.type === 'ice') {
+                                setParticle(x + dx, y + dy, new Particle(x + dx, y + dy, 'water'));
+                            }
+                        }
+                    }
+                }
+
+                if (particle.temp < 600) {
+                    setParticle(x, y, new Particle(x, y, 'stone'));
+                    return;
+                }
+            }
+
+            // Bomb explodes when hitting something at high speed
+            if (type === 'bomb') {
+                if (isEmpty(x, y + 1)) {
+                    particle.fallDistance++;
+                } else if (particle.fallDistance > 3) {
+                    explodeBomb(x, y);
+                    return;
+                }
+            }
+
+            // Volcano Core
+            if (type === 'volcano') {
+                particle.lavaTimer++;
+                if (particle.lavaTimer > 5) {
+                    particle.lavaTimer = 0;
+                    const directions = [[0, -1], [-1, -1], [1, -1], [-1, 0], [1, 0]];
+                    for (const [dx, dy] of directions) {
+                        if (isEmpty(x + dx, y + dy) && Math.random() < 0.4) {
+                            const lavaParticle = new Particle(x + dx, y + dy, 'lava');
+                            lavaParticle.temp = 1200;
+                            setParticle(x + dx, y + dy, lavaParticle);
+                        }
+                    }
+                }
+                return;
+            }
+            // Water Fountain Core for africans
+            if (type === 'waterfountain') {
+                particle.lavaTimer++;
+                if (particle.lavaTimer > 5) {
+                    particle.lavaTimer = 0;
+                    const directions = [[0, -1], [-1, -1], [1, -1], [-1, 0], [1, 0]];
+                    for (const [dx, dy] of directions) {
+                        if (isEmpty(x + dx, y + dy) && Math.random() < 0.5) {
+                            const waterParticle = new Particle(x + dx, y + dy, 'water');
+                            waterParticle.temp = 20;
+                            setParticle(x + dx, y + dy, waterParticle);
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Black Hole
+            if (type === 'blackhole') {
+                const suckRadius = 12;
+                for (let dx = -suckRadius; dx <= suckRadius; dx++) {
+                    for (let dy = -suckRadius; dy <= suckRadius; dy++) {
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance <= suckRadius && distance > 0) {
+                            const target = getParticle(x + dx, y + dy);
+                            if (target && target.type !== 'blackhole') {
+                                const pullStrength = 1 - (distance / suckRadius);
+
+                                // Much stronger pull chance
+                                if (Math.random() < pullStrength * 0.8) {
+                                    // Calculate direction toward black hole
+                                    const pullX = dx < 0 ? 1 : dx > 0 ? -1 : 0;
+                                    const pullY = dy < 0 ? 1 : dy > 0 ? -1 : 0;
+
+                                    const newX = x + dx + pullX;
+                                    const newY = y + dy + pullY;
+
+                                    // Try to move particle closer to black hole
+                                    if (newX >= 0 && newX < cols && newY >= 0 && newY < rows) {
+                                        if (isEmpty(newX, newY)) {
+                                            swapParticles(x + dx, y + dy, newX, newY);
+                                        } else if (Math.abs(dx) <= 2 && Math.abs(dy) <= 2) {
+                                            // If very close to black hole, destroy the particle
+                                            setParticle(x + dx, y + dy, null);
+                                        }
+                                    }
+                                }
+
+                                // Particles right next to black hole get consumed
+                                if (distance <= 1.5) {
+                                    setParticle(x + dx, y + dy, null);
+                                }
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+            // Liquid Nitrogen
+            if (type === 'liquidnitrogen') {
+                for (let dx = -2; dx <= 2; dx++) {
+                    for (let dy = -2; dy <= 2; dy++) {
+                        const neighbor = getParticle(x + dx, y + dy);
+                        if (neighbor && neighbor.type !== 'liquidnitrogen' && Math.random() < 0.1) {
+                            neighbor.temp = -196;
+
+                            if (['water', 'acid'].includes(neighbor.type)) {
+                                setParticle(x + dx, y + dy, new Particle(x + dx, y + dy, 'brittle'));
+                            } else if (['plant', 'leaf', 'wood', 'sprout'].includes(neighbor.type)) {
+                                const brittle = new Particle(x + dx, y + dy, 'brittle');
+                                brittle.temp = -196;
+                                setParticle(x + dx, y + dy, brittle);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Brittle material breaks when heated or impacted
+            if (type === 'brittle') {
+                if (particle.temp > -20 || particle.vy > 2) {
+                    const fragments = Math.floor(Math.random() * 4) + 2;
+                    setParticle(x, y, null);
+
+                    for (let i = 0; i < fragments; i++) {
+                        const fx = x + Math.floor((Math.random() - 0.5) * 3);
+                        const fy = y + Math.floor((Math.random() - 0.5) * 3);
+                        if (isEmpty(fx, fy)) {
+                            setParticle(fx, fy, new Particle(fx, fy, 'ice'));
+                        }
+                    }
+                    return;
+                }
+            }
+
+            // Virus
+            if (type === 'virus') {
+                particle.life--;
+                if (particle.life <= 0) {
+                    setParticle(x, y, null);
+                    return;
+                }
+
+                for (let dx = -2; dx <= 2; dx++) {
+                    for (let dy = -2; dy <= 2; dy++) {
+                        const neighbor = getParticle(x + dx, y + dy);
+                        if (neighbor && neighbor.type !== 'virus' && Math.random() < 0.03) {
+                            if (Math.random() < 0.4) {
+                                setParticle(x + dx, y + dy, new Particle(x + dx, y + dy, 'virus'));
+                            } else {
+                                setParticle(x + dx, y + dy, null);
+                            }
+                        }
+                    }
+                }
+
+                if (Math.random() < 0.1) {
+                    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+                    const dir = directions[Math.floor(Math.random() * directions.length)];
+                    if (isEmpty(x + dir[0], y + dir[1])) {
+                        swapParticles(x, y, x + dir[0], y + dir[1]);
+                    }
+                }
+            }
+
+            // Hydrogen gas behavior
+            if (type === 'hydrogen') {
+                if (isEmpty(x, y - 1) && Math.random() < 0.6) {
+                    swapParticles(x, y, x, y - 1);
+                } else if (Math.random() < 0.3) {
+                    const directions = [[-1, -1], [1, -1], [-1, 0], [1, 0]];
+                    const dir = directions[Math.floor(Math.random() * directions.length)];
+                    if (isEmpty(x + dir[0], y + dir[1])) {
+                        swapParticles(x, y, x + dir[0], y + dir[1]);
+                    }
+                }
+            }
+
+            // Gunpowder explosion chain reaction
+            if (type === 'gunpowder' && particle.temp > elements.gunpowder.ignitePoint) {
+                const explosionSize = 3;
+                for (let dx = -explosionSize; dx <= explosionSize; dx++) {
+                    for (let dy = -explosionSize; dy <= explosionSize; dy++) {
+                        if (dx * dx + dy * dy <= explosionSize * explosionSize) {
+                            const nx = x + dx;
+                            const ny = y + dy;
+                            if (Math.random() < 0.6) {
+                                const fireParticle = new Particle(nx, ny, 'fire');
+                                fireParticle.temp = 600;
+                                setParticle(nx, ny, fireParticle);
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Ice melting
+            if (type === 'ice') {
+                let shouldMelt = false;
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        const neighbor = getParticle(x + dx, y + dy);
+                        if (neighbor && (neighbor.temp > 50 || ['fire', 'lava', 'steam'].includes(neighbor.type))) {
+                            shouldMelt = true;
+                            break;
+                        }
+                    }
+                    if (shouldMelt) break;
+                }
+
+                if (shouldMelt) {
+                    setParticle(x, y, new Particle(x, y, 'water'));
+                    return;
+                }
+            }
+
+            // Seed growth
+            if (type === 'seed') {
+                let inSoil = false;
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = 0; dy <= 2; dy++) {
+                        const neighbor = getParticle(x + dx, y + dy);
+                        if (neighbor && neighbor.type === 'soil') inSoil = true;
+                    }
+                }
+
+                if (inSoil && particle.temp > 5 && particle.temp < 45) {
+                    particle.growthTimer++;
+                    if (particle.growthTimer > 30) { // Faster growth if water absorbed
+                        setParticle(x, y, new Particle(x, y, 'sprout'));
+                        return;
+                    }
+                }
+            }
+
+            // Sprout growth
+            if (type === 'sprout') {
+                let inSoil = false;
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = 0; dy <= 2; dy++) {
+                        const neighbor = getParticle(x + dx, y + dy);
+                        if (neighbor && neighbor.type === 'soil') inSoil = true;
+                    }
+                }
+
+                if (inSoil && particle.temp > 5 && particle.temp < 45) {
+                    particle.growthTimer++;
+                    if (particle.growthTimer > 80) {
+                        const plant = new Particle(x, y, 'plant');
+                        plant.height = 1;
+                        setParticle(x, y, plant);
+                        if (isEmpty(x, y - 1)) {
+                            setParticle(x, y - 1, new Particle(x, y - 1, 'leaf'));
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // Plant growth
+            if (type === 'plant' && particle.age > 30 && particle.age % 100 === 0) {
+                let hasNutrients = false;
+                for (let dx = -3; dx <= 3; dx++) {
+                    for (let dy = 0; dy <= 4; dy++) {
+                        const neighbor = getParticle(x + dx, y + dy);
+                        if (neighbor && neighbor.type === 'soil') hasNutrients = true;
+                    }
+                }
+
+                if (hasNutrients && particle.temp > 5) {
+                    if (isEmpty(x, y - 1)) {
+                        const newPlant = new Particle(x, y - 1, 'plant');
+                        newPlant.height = particle.height + 1;
+                        setParticle(x, y - 1, newPlant);
+
+                        const leafPositions = [[-1, 0], [1, 0]];
+                        if (particle.height % 3 === 0) {
+                            leafPositions.push([-1, -1], [1, -1], [0, -1]);
+                        }
+
+                        for (const [dx, dy] of leafPositions) {
+                            if (isEmpty(x + dx, y - 1 + dy) && Math.random() < 0.7) {
+                                setParticle(x + dx, y - 1 + dy, new Particle(x + dx, y - 1 + dy, 'leaf'));
+                            }
+                        }
+
+                        if (particle.height >= 5 && particle.height % 4 === 0 && Math.random() < 0.4) {
+                            if (isEmpty(x, y - 2)) {
+                                setParticle(x, y - 2, new Particle(x, y - 2, 'flower'));
+                            }
+                        }
+                    }
+                }
+
+                if (Math.random() < 0.2) {
+                    const directions = [[-2, 0], [2, 0], [-1, -1], [1, -1]];
+                    for (const [dx, dy] of directions) {
+                        if (isEmpty(x + dx, y + dy) && Math.random() < 0.3) {
+                            setParticle(x + dx, y + dy, new Particle(x + dx, y + dy, 'leaf'));
+                        }
+                    }
+                }
+            }
+
+            // Temperature diffusion
+            let avgTemp = particle.temp;
+            let count = 1;
+
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const neighbor = getParticle(x + dx, y + dy);
+                    if (neighbor) {
+                        avgTemp += neighbor.temp;
+                        count++;
+                    }
+                }
+            }
+
+            particle.temp = (particle.temp * 0.95) + (avgTemp / count * 0.05);
+
+            // Water evaporation
+            if (type === 'water' && particle.temp > elements.water.boilPoint) {
+                setParticle(x, y, new Particle(x, y, 'steam'));
+                return;
+            }
+
+            // Steam condensation
+            if (type === 'steam') {
+                particle.life--;
+                if (particle.life <= 0 || particle.temp < 90) {
+                    setParticle(x, y, new Particle(x, y, 'water'));
+                    return;
+                }
+
+                if (isEmpty(x, y - 1) && Math.random() < 0.6) {
+                    swapParticles(x, y, x, y - 1);
+                } else if (Math.random() < 0.2) {
+                    const dirs = [[-1, -1], [1, -1], [-1, 0], [1, 0]];
+                    const dir = dirs[Math.floor(Math.random() * dirs.length)];
+                    if (isEmpty(x + dir[0], y + dir[1])) {
+                        swapParticles(x, y, x + dir[0], y + dir[1]);
+                    }
+                }
+                return;
+            }
+
+            // Fire logic
+            if (type === 'fire') {
+                particle.life--;
+                if (particle.life <= 0) {
+                    if (Math.random() < 0.4) {
+                        setParticle(x, y, new Particle(x, y, 'smoke'));
+                    } else {
+                        setParticle(x, y, null);
+                    }
+                    return;
+                }
+
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        const neighbor = getParticle(x + dx, y + dy);
+                        if (neighbor) {
+                            neighbor.temp += 50;
+
+                            if (elements[neighbor.type].flammable && neighbor.temp > (elements[neighbor.type].ignitePoint || 300)) {
+                                if (['explosive', 'gunpowder'].includes(neighbor.type)) {
+                                    explode(x + dx, y + dy);
+                                } else if (neighbor.type === 'hydrogen') {
+                                    explodeHydrogen(x + dx, y + dy);
+                                } else if (Math.random() < 0.1) {
+                                    setParticle(x + dx, y + dy, new Particle(x + dx, y + dy, 'fire'));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (isEmpty(x, y - 1) && Math.random() < 0.3) {
+                    swapParticles(x, y, x, y - 1);
+                }
+                return;
+            }
+
+            // Smoke behavior
+            if (type === 'smoke') {
+                particle.life--;
+                if (particle.life <= 0) {
+                    setParticle(x, y, null);
+                    return;
+                }
+
+                if (isEmpty(x, y - 1) && Math.random() < 0.7) {
+                    swapParticles(x, y, x, y - 1);
+                } else if (Math.random() < 0.2) {
+                    const dirs = [[-1, -1], [1, -1], [-1, 0], [1, 0]];
+                    const dir = dirs[Math.floor(Math.random() * dirs.length)];
+                    if (isEmpty(x + dir[0], y + dir[1])) {
+                        swapParticles(x, y, x + dir[0], y + dir[1]);
+                    }
+                }
+                return;
+            }
+
+            // Physics simulation - improved water flow
+            const element = elements[type];
+            const isLiquid = element.liquid;
+            const shouldFall = ['soil', 'sand', 'seed', 'bomb', 'gunpowder', 'uranium'].includes(type) || isLiquid;
+
+            if (shouldFall) {
+                const below = getParticle(x, y + 1);
+
+                if (!isLiquid && below && elements[below.type].liquid &&
+                    elements[type].density > elements[below.type].density) {
+                    swapParticles(x, y, x, y + 1);
+                    return;
+                }
+
+                if (isEmpty(x, y + 1)) {
+                    particle.vy = Math.min(particle.vy + 0.1, 3);
+                    swapParticles(x, y, x, y + 1);
+                } else if (isLiquid || type === 'moltenTin' || type === 'lava' || type === 'liquidnitrogen') {
+                    // Enhanced liquid flow - try diagonal down first, then sideways
+                    const leftDown = getParticle(x - 1, y + 1);
+                    const rightDown = getParticle(x + 1, y + 1);
+
+                    const canFlowLeft = !leftDown || (elements[leftDown.type].liquid &&
+                        elements[type].density > elements[leftDown.type].density);
+                    const canFlowRight = !rightDown || (elements[rightDown.type].liquid &&
+                        elements[type].density > elements[rightDown.type].density);
+
+                    if (canFlowLeft && canFlowRight) {
+                        const dir = Math.random() < 0.5 ? -1 : 1;
+                        swapParticles(x, y, x + dir, y + 1);
+                    } else if (canFlowLeft) {
+                        swapParticles(x, y, x - 1, y + 1);
+                    } else if (canFlowRight) {
+                        swapParticles(x, y, x + 1, y + 1);
+                    } else {
+                        // Horizontal flow - much more aggressive for water
+                        const sideLeft = getParticle(x - 1, y);
+                        const sideRight = getParticle(x + 1, y);
+
+                        const canMoveLeft = !sideLeft || (elements[sideLeft.type].liquid &&
+                            elements[type].density > elements[sideLeft.type].density);
+                        const canMoveRight = !sideRight || (elements[sideRight.type].liquid &&
+                            elements[type].density > elements[sideRight.type].density);
+
+                        // Increased flow chance for water specifically
+                        const flowChance = type === 'water' ? 0.8 : 0.3;
+
+                        if (canMoveLeft && canMoveRight && Math.random() < flowChance) {
+                            const dir = Math.random() < 0.5 ? -1 : 1;
+                            swapParticles(x, y, x + dir, y);
+                        } else if (canMoveLeft && Math.random() < flowChance) {
+                            swapParticles(x, y, x - 1, y);
+                        } else if (canMoveRight && Math.random() < flowChance) {
+                            swapParticles(x, y, x + 1, y);
+                        }
+                    }
+                } else if (['sand', 'soil', 'seed', 'stone', 'metal', 'tin', 'glass', 'explosive', 'wood', 'bomb', 'gunpowder', 'uranium'].includes(type)) {
+                    const leftBelow = getParticle(x - 1, y + 1);
+                    const rightBelow = getParticle(x + 1, y + 1);
+                    const left = isEmpty(x - 1, y + 1) || (leftBelow && elements[leftBelow.type].liquid);
+                    const right = isEmpty(x + 1, y + 1) || (rightBelow && elements[rightBelow.type].liquid);
+
+                    if (left && right) {
+                        const dir = Math.random() < 0.5 ? -1 : 1;
+                        swapParticles(x, y, x + dir, y + 1);
+                    } else if (left && Math.random() < 0.5) {
+                        swapParticles(x, y, x - 1, y + 1);
+                    } else if (right && Math.random() < 0.5) {
+                        swapParticles(x, y, x + 1, y + 1);
+                    }
+                } else {
+                    particle.vy = 0;
+                }
+            }
+        }
+
+        function explodeHydrogen(x, y) {
+            const radius = 6;
+            for (let dx = -radius; dx <= radius; dx++) {
+                for (let dy = -radius; dy <= radius; dy++) {
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance <= radius) {
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+                            const intensity = 1 - (distance / radius);
+                            if (Math.random() < 0.9 * intensity) {
+                                const fireParticle = new Particle(nx, ny, 'fire');
+                                fireParticle.temp = 800;
+                                fireParticle.life = 40 + Math.random() * 30;
+                                setParticle(nx, ny, fireParticle);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function explode(x, y) {
+            const radius = 5;
+            for (let dx = -radius; dx <= radius; dx++) {
+                for (let dy = -radius; dy <= radius; dy++) {
+                    if (dx * dx + dy * dy <= radius * radius) {
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+                            if (Math.random() < 0.7) {
+                                const fireParticle = new Particle(nx, ny, 'fire');
+                                fireParticle.temp = 1000;
+                                setParticle(nx, ny, fireParticle);
+                            } else {
+                                setParticle(nx, ny, null);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function explodeBomb(x, y) {
+            const radius = 8;
+            for (let dx = -radius; dx <= radius; dx++) {
+                for (let dy = -radius; dy <= radius; dy++) {
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance <= radius) {
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+                            const intensity = 1 - (distance / radius);
+                            if (Math.random() < 0.8 * intensity) {
+                                const fireParticle = new Particle(nx, ny, 'fire');
+                                fireParticle.temp = 1200;
+                                fireParticle.life = 80 + Math.random() * 40;
+                                setParticle(nx, ny, fireParticle);
+                            } else if (Math.random() < 0.3) {
+                                setParticle(nx, ny, null);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function getTemperatureColor(temp) {
+            if (temp < -100) return '#0000FF';
+            if (temp < -50) return '#4444FF';
+            if (temp < 0) return '#4A90E2';
+            if (temp < 50) return '#87CEEB';
+            if (temp < 100) return '#00FF00';
+            if (temp < 200) return '#FFFF00';
+            if (temp < 400) return '#FF8800';
+            if (temp < 600) return '#FF4500';
+            return '#FF0000';
+        }
+
+        function update() {
+            for (let y = 0; y < rows; y++) {
+                if (grid[y]) {
+                    for (let x = 0; x < cols; x++) {
+                        if (grid[y][x]) {
+                            grid[y][x].updated = false;
+                        }
+                    }
+                }
+            }
+
+            const baseUpdates = Math.floor(simulationSpeed);
+            const fractionalPart = simulationSpeed - baseUpdates;
+            const updates = baseUpdates + (Math.random() < fractionalPart ? 1 : 0);
+
+            for (let u = 0; u < Math.max(1, updates); u++) {
+                for (let y = rows - 1; y >= 0; y--) {
+                    if (!grid[y]) continue;
+
+                    const indices = [];
+                    for (let x = 0; x < cols; x++) {
+                        indices.push(x);
+                    }
+                    for (let i = indices.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [indices[i], indices[j]] = [indices[j], indices[i]];
+                    }
+
+                    for (const x of indices) {
+                        const particle = grid[y][x];
+                        if (particle && (simulationSpeed >= 1 || Math.random() < simulationSpeed)) {
+                            updateParticle(particle);
+                        }
+                    }
+                }
+            }
+        }
+
+        function render() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let y = 0; y < rows; y++) {
+                if (!grid[y]) continue;
+                for (let x = 0; x < cols; x++) {
+                    const particle = grid[y][x];
+                    if (particle) {
+                        if (thermalVision) {
+                            ctx.fillStyle = getTemperatureColor(particle.temp);
+                        } else {
+                            // Uranium flickering effect
+                            if (particle.type === 'uranium' && particle.isFlickering) {
+                                const flickerIntensity = Math.sin(Date.now() * 0.01) * 0.5 + 0.5; // 0 → 1
+                                const colorValue = Math.floor(255 * flickerIntensity); // 0 → 255
+                                ctx.fillStyle = `rgb(${colorValue}, 255, ${colorValue})`; // flicker white → green
+
+
+                            } else {
+                                ctx.fillStyle = elements[particle.type].color;
+                            }
+
+                            if (['glass', 'steam'].includes(particle.type)) {
+                                ctx.globalAlpha = 0.7;
+                            } else if (particle.infected) {
+                                ctx.fillStyle = '#FFFF00';
+                            }
+                        }
+                        ctx.fillRect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+                        ctx.globalAlpha = 1.0;
+                    }
+                }
+            }
+        }
+
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Category toggle function
+        function toggleCategory(categoryName) {
+            const content = document.getElementById(categoryName + '-content');
+            const header = content.previousElementSibling;
+            const arrow = header.querySelector('.category-arrow');
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                arrow.classList.remove('expanded');
+            } else {
+                content.classList.add('expanded');
+                arrow.classList.add('expanded');
+            }
+        }
+
+        // Modal Functions
+        function showClearConfirmation() {
+            document.getElementById('clearModal').style.display = 'block';
+        }
+
+        function closeClearModal() {
+            document.getElementById('clearModal').style.display = 'none';
+        }
+
+        function confirmClear() {
+            initGrid();
+            closeClearModal();
+        }
+
+        function showGridConfirmation(newSize) {
+            pendingGridSize = newSize;
+            document.getElementById('gridModal').style.display = 'block';
+        }
+
+        function confirmGridChange() {
+            if (pendingGridSize !== null) {
+                GRID_SIZE = pendingGridSize;
+                cols = Math.floor(canvas.width / GRID_SIZE);
+                rows = Math.floor(canvas.height / GRID_SIZE);
+                initGrid();
+                pendingGridSize = null;
+            }
+            document.getElementById('gridModal').style.display = 'none';
+        }
+
+        function cancelGridChange() {
+            // Reset slider to current grid size
+            document.getElementById('gridSizeSlider').value = GRID_SIZE;
+            document.getElementById('gridValue').textContent = GRID_SIZE + 'px';
+            pendingGridSize = null;
+            document.getElementById('gridModal').style.display = 'none';
+        }
+
+        // UI Functions
+        function goToMenu() {
+            window.location.href = 'menu.html';
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('leftSidebar');
+            const toggleBtn = document.getElementById('menuToggle');
+
+            sidebarOpen = !sidebarOpen;
+
+            if (sidebarOpen) {
+                sidebar.classList.remove('closed');
+                toggleBtn.classList.remove('closed');
+                toggleBtn.textContent = '✕';
+            } else {
+                sidebar.classList.add('closed');
+                toggleBtn.classList.add('closed');
+                toggleBtn.textContent = '☰';
+            }
+        }
+
+        function toggleThermal() {
+            thermalVision = !thermalVision;
+            const btn = document.getElementById('thermalBtn');
+            if (thermalVision) {
+                btn.classList.add('active');
+                btn.textContent = 'Normal Vision';
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = 'Thermal Vision';
+            }
+        }
+
+        // Drawing functions
+        function drawAt(mouseX, mouseY) {
+            const gridX = Math.floor(mouseX / GRID_SIZE);
+            const gridY = Math.floor(mouseY / GRID_SIZE);
+
+            for (let dx = -brushSize; dx <= brushSize; dx++) {
+                for (let dy = -brushSize; dy <= brushSize; dy++) {
+                    if (dx * dx + dy * dy <= brushSize * brushSize) {
+                        const x = gridX + dx;
+                        const y = gridY + dy;
+
+                        if (x >= 0 && x < cols && y >= 0 && y < rows) {
+                            if (currentElement === 'eraser') {
+                                setParticle(x, y, null);
+                            } else if (!getParticle(x, y)) {
+                                setParticle(x, y, new Particle(x, y, currentElement));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Event listeners
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            drawAt(x, y);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDrawing) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                drawAt(x, y);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            drawAt(x, y);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (isDrawing) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                drawAt(x, y);
+            }
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isDrawing = false;
+        });
+
+        // Element selection
+        document.querySelectorAll('.element-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Skip disabled buttons
+                if (btn.disabled || btn.classList.contains('disabled')) {
+                    return;
+                }
+
+                document.querySelector('.element-btn.active')?.classList.remove('active');
+                btn.classList.add('active');
+                currentElement = btn.dataset.element;
+            });
+        });
+
+        // Controls
+        const brushSlider = document.getElementById('brushSize');
+        const brushValue = document.getElementById('brushValue');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const gridSizeSlider = document.getElementById('gridSizeSlider');
+        const gridValue = document.getElementById('gridValue');
+
+        brushSlider.addEventListener('input', (e) => {
+            brushSize = parseInt(e.target.value);
+            brushValue.textContent = brushSize;
+        });
+
+        speedSlider.addEventListener('input', (e) => {
+            simulationSpeed = parseFloat(e.target.value);
+            speedValue.textContent = simulationSpeed.toFixed(1) + 'x';
+        });
+
+        gridSizeSlider.addEventListener('input', (e) => {
+            const newSize = parseInt(e.target.value);
+            gridValue.textContent = newSize + 'px';
+        });
+
+        gridSizeSlider.addEventListener('change', (e) => {
+            const newSize = parseInt(e.target.value);
+            if (newSize !== GRID_SIZE) {
+                showGridConfirmation(newSize);
+            }
+        });
+
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            const clearModal = document.getElementById('clearModal');
+            const gridModal = document.getElementById('gridModal');
+
+            if (e.target === clearModal) {
+                closeClearModal();
+            }
+            if (e.target === gridModal) {
+                cancelGridChange();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            resizeCanvases();
+            cols = Math.floor(canvas.width / GRID_SIZE);
+            rows = Math.floor(canvas.height / GRID_SIZE);
+            initGrid();
+        });
+
+        // Prevent right-click context menu on canvas
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // Keyboard shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
+                e.preventDefault();
+                toggleThermal();
+            } else if (e.key === 'c' || e.key === 'C') {
+                showClearConfirmation();
+            } else if (e.key === 'Escape') {
+                // Close any open modal
+                closeClearModal();
+                cancelGridChange();
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                toggleSidebar();
+            }
+        });
+
+        // Touch event improvements for mobile
+        let lastTouchTime = 0;
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const currentTime = Date.now();
+            const timeDiff = currentTime - lastTouchTime;
+
+            // Double tap to toggle thermal vision
+            if (timeDiff < 300 && timeDiff > 0) {
+                toggleThermal();
+                return;
+            }
+
+            lastTouchTime = currentTime;
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            drawAt(x, y);
+        });
+
+        // Prevent scrolling and zooming on mobile
+        document.addEventListener('touchmove', (e) => {
+            if (e.target === canvas) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('gesturestart', (e) => {
+            e.preventDefault();
+        });
+
+        document.addEventListener('gesturechange', (e) => {
+            e.preventDefault();
+        });
+
+        document.addEventListener('gestureend', (e) => {
+            e.preventDefault();
+        });
+
+        // Initialize game immediately when page loads
+        initGrid();
+        gameLoop();
+
+    </script>
+</body>
+
+</html>
